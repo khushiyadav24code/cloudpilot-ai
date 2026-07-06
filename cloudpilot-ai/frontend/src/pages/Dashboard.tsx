@@ -3,17 +3,18 @@ import {
   Bell,
   Cloud,
   Copy,
+  Database,
+  DollarSign,
   Download,
+  FileCode2,
+  Globe2,
   Search,
   Send,
-  Shield,
-  DollarSign,
-  FileCode2,
   Server,
-  Database,
-  Globe2,
+  Shield,
   CheckCircle2,
   X,
+  Brain,
 } from "lucide-react";
 import { analyzePrompt } from "../ai/analyzer";
 
@@ -34,6 +35,7 @@ const notifications = [
 export function Dashboard() {
   const [prompt, setPrompt] = useState("");
   const [generated, setGenerated] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [bellOpen, setBellOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [result, setResult] = useState(analyzePrompt("portfolio website"));
@@ -44,15 +46,21 @@ export function Dashboard() {
     );
   }, [search]);
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (!prompt.trim()) {
       alert("Enter a cloud requirement first");
       return;
     }
 
+    setGenerated(false);
+    setLoading(true);
+
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
     const analysis = analyzePrompt(prompt);
     setResult(analysis);
     setGenerated(true);
+    setLoading(false);
   };
 
   const copyTerraform = () => {
@@ -96,11 +104,14 @@ export function Dashboard() {
             </button>
 
             {bellOpen && (
-              <div className="absolute right-0 top-14 w-80 rounded-3xl border border-white/10 bg-slate-950 p-4 shadow-2xl">
+              <div className="absolute right-0 top-14 z-50 w-80 rounded-3xl border border-white/10 bg-slate-950 p-4 shadow-2xl">
                 <div className="mb-3 flex items-center justify-between">
                   <h3 className="font-semibold">Notifications</h3>
-                  <X size={16} onClick={() => setBellOpen(false)} />
+                  <button onClick={() => setBellOpen(false)}>
+                    <X size={16} />
+                  </button>
                 </div>
+
                 {notifications.map((note) => (
                   <div
                     key={note}
@@ -133,7 +144,9 @@ export function Dashboard() {
 
         <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 shadow-2xl">
-            <p className="mb-3 text-sm text-cyan-300">Describe your infrastructure</p>
+            <p className="mb-3 text-sm text-cyan-300">
+              Describe your infrastructure
+            </p>
 
             <textarea
               value={prompt}
@@ -144,18 +157,34 @@ export function Dashboard() {
 
             <button
               onClick={handleGenerate}
-              className="mt-4 flex items-center gap-2 rounded-full bg-cyan-300 px-6 py-3 font-semibold text-slate-950 hover:bg-cyan-200"
+              disabled={loading}
+              className="mt-4 flex items-center gap-2 rounded-full bg-cyan-300 px-6 py-3 font-semibold text-slate-950 hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Generate Infrastructure <Send size={16} />
+              {loading ? "Analyzing..." : "Generate Infrastructure"}
+              <Send size={16} />
             </button>
           </div>
 
           <div className="grid gap-4">
-            <Stat icon={<Shield />} label="Security" value={generated ? result.securityScore : "--"} />
-            <Stat icon={<DollarSign />} label="Cost" value={generated ? result.cost : "--"} />
-            <Stat icon={<FileCode2 />} label="Terraform" value={generated ? result.terraformFiles : "--"} />
+            <Stat
+              icon={<Shield />}
+              label="Security"
+              value={generated ? result.securityScore : "--"}
+            />
+            <Stat
+              icon={<DollarSign />}
+              label="Cost"
+              value={generated ? result.cost : "--"}
+            />
+            <Stat
+              icon={<FileCode2 />}
+              label="Terraform"
+              value={generated ? result.terraformFiles : "--"}
+            />
           </div>
         </section>
+
+        {loading && <ThinkingLoader />}
 
         {generated && (
           <section className="mt-6 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
@@ -180,13 +209,17 @@ export function Dashboard() {
 
               <Panel title="Terraform Output">
                 <div className="mb-3 flex gap-3">
-                  <button onClick={copyTerraform} className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm">
+                  <button
+                    onClick={copyTerraform}
+                    className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm"
+                  >
                     <Copy size={15} /> Copy
                   </button>
                   <button className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm">
                     <Download size={15} /> Export
                   </button>
                 </div>
+
                 <pre className="overflow-x-auto rounded-3xl bg-[#060b16] p-5 text-sm text-cyan-200">
                   {result.terraformCode}
                 </pre>
@@ -205,7 +238,52 @@ export function Dashboard() {
   );
 }
 
-function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function ThinkingLoader() {
+  const steps = [
+    "Understanding requirements",
+    "Selecting AWS services",
+    "Estimating monthly cost",
+    "Running security analysis",
+    "Generating Terraform",
+  ];
+
+  return (
+    <div className="mt-6 rounded-[2rem] border border-cyan-300/20 bg-cyan-300/5 p-6">
+      <div className="mb-5 flex items-center gap-3">
+        <div className="animate-pulse rounded-full bg-cyan-300/20 p-3">
+          <Brain className="text-cyan-300" />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold">CloudPilot AI is thinking...</h2>
+          <p className="text-sm text-slate-400">
+            Building your cloud architecture step by step
+          </p>
+        </div>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-5">
+        {steps.map((step) => (
+          <div key={step} className="rounded-2xl bg-white/5 p-4">
+            <p className="mb-3 text-sm text-slate-300">{step}</p>
+            <div className="h-2 overflow-hidden rounded-full bg-slate-800">
+              <div className="h-full w-full animate-pulse bg-cyan-300" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Stat({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
   return (
     <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
       <div className="mb-4 text-cyan-300">{icon}</div>
@@ -215,7 +293,13 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
   );
 }
 
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
+function Panel({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
       <h3 className="mb-4 text-lg font-semibold">{title}</h3>
@@ -245,12 +329,14 @@ function Architecture({ services }: { services: string[] }) {
 
       {services.slice(0, 5).map((service, index) => {
         const Icon = icons[index % icons.length];
+
         return (
           <div key={service}>
             <div className="mx-auto flex w-fit items-center gap-3 rounded-2xl border border-white/10 bg-slate-900 px-5 py-3">
               <Icon size={18} className="text-cyan-300" />
               {service}
             </div>
+
             {index !== services.slice(0, 5).length - 1 && (
               <div className="mx-auto h-6 w-px bg-cyan-300/30" />
             )}
